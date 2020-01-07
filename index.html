@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Teste Front-end - Ivan Henrique</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/meyer-reset/2.0/reset.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/sakura.css/css/sakura.css" type="text/css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <main id="main">
+        {{
+            /*
+                Requisitos:
+                Desenvolver uma calculadora para a promoção FaleMuito com base no código de origem/destino, duração e taxa
+                -- 
+
+                // Formula
+                VM = Valor do Minuto
+                TTE = Taxa de tempo excedente (10%)
+                D = Duração da ligação
+                F = Franquia fixa
+                ( VM + ( VM * TTE ) * ( D - F )
+            */
+        }}
+        
+        <h1>Teste Ivan Henrique - <small>Desenvolvedor Front-end</small></h1>
+
+        <hr>
+
+        <h2>Comentários:</h2>
+        <p> Levei em torno de 4 horas para concluir o teste, optei por usar vue.js pois estou familiarizado com a linguagem e poderia entregar um teste reativo com pouco esforço, não investi muito tempo no HTML/CSS foquei na execução pura do problema. </p>
+
+        <a href="https://bitbucket.org/casperlibero/fcl-dev-test/src/a9cd399c08ee41f02eb471c7b9187dbbdece2f61/TESTE-2.md"> Link do teste recebido </a>
+
+        <hr>
+
+        <nav class="calc">
+
+            <div class="calc__body">
+                <select v-model="ddd_orig">
+                    <option v-bind:value="false"> Selecione a Origem </option>
+                    <option v-for="opt in ddd" v-bind:value="opt">
+                        {{ opt.name }}
+                    </option>
+                </select>
+
+                <select v-model="ddd_dest">
+                    <option v-bind:value="false"> Selecione o Destino </option>
+                    <option v-for="opt in ddd" v-bind:value="opt">
+                        {{ opt.name }}
+                    </option>
+                </select>
+
+                <div class="ipt-group">
+                    <label for="duracao"> Duração: </label>
+                    <input name="duracao" v-model="call_duration" type="number" min="1">
+                </div>
+            </div>
+
+            <div v-show="calc_msg" class="cald__footer">
+                <small class="error-msg"> {{ calc_msg }} </small>
+            </div>
+        </nav>
+
+
+        <table v-show="!calc_msg">
+            <thead>
+                <tr>
+                    <th align="center"> Plano </th>
+                    <th align="center"> Valor </th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr v-for="result in results">
+                    <td align="center"> {{ result.name }} </td>
+                    <td align="center"> {{ result.value }} </td>
+                </tr>
+            </tbody>
+        </table>
+
+    </main>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.0"></script>
+    <script>
+        var main = new Vue({
+            el: "#main",
+            data: function() {
+                return {
+                    results: [],
+                    ddd: [
+                        {
+                            digit: '11',
+                            name: 'São Paulo',
+                            price:[
+                                { 
+                                    digit: '16',
+                                    value: 1.9
+                                 },
+                                 { 
+                                    digit: '17',
+                                    value: 2.9
+                                 },
+                                 { 
+                                    digit: '18',
+                                    value: 1.9
+                                 }
+                            ]
+                        },
+                        {
+                            digit: '16',
+                            name: 'Ribeirão Preto',
+                            price:[
+                                { 
+                                    digit: '11',
+                                    value: 2.9
+                                 }
+                            ]
+                        },
+                        {
+                            digit: '17',
+                            name: 'Mirassol',
+                            price:[
+                                { 
+                                    digit: '11',
+                                    value: 2.7
+                                 }
+                            ]
+                        },
+                        {
+                            digit: '18',
+                            name: 'Tupi Paulista',
+                            price:[
+                                { 
+                                    digit: '11',
+                                    value: 1.9
+                                 }
+                            ]
+                        }
+                    ],
+                    ddd_orig: false,
+                    ddd_dest: false,
+                    calc_msg: false,
+                    call_duration: 1,
+                }
+            },
+            mounted(){
+                // Testes
+                // Entrada válida: origem=18 destino=11 tempo=200
+                this.ddd_orig = this.ddd[3]; // Tupi Paulista
+                this.ddd_dest = this.ddd[0]; // SP
+                this.call_duration = 200; // Duração 200
+
+                console.log( this.calc_falemuito() );
+
+
+                // Entrada inválida origem=18 destino=17 tempo=200
+                this.ddd_orig = this.ddd[3]; // Tupi Paulista
+                this.ddd_dest = this.ddd[2]; // Mirassol
+                this.call_duration = 200; // Duração 200
+
+                console.log( this.calc_falemuito() );
+
+
+                // Definindo os valores iniciais
+                this.ddd_orig = false; // Tupi Paulista
+                this.ddd_dest = false; // Mirassol
+                this.call_duration = 1; // Duração 200
+
+            },
+            watch: {
+                ddd_orig: function() {
+                    let app = this;
+
+                    if( app.calc_validate() ){
+                        app.calc_falemuito();
+                    };
+                },
+                ddd_dest: function(){
+                    let app = this;
+
+                    if( app.calc_validate() ){
+                        app.calc_falemuito();
+                    };
+                },
+                call_duration: function(){
+                    let app = this;
+
+                    if( app.calc_validate() ){
+                        app.calc_falemuito();
+                    };
+                }
+            },
+            methods: {
+                calc_falemuito(){
+                    let app = this,
+                        result = [];
+
+                    const tde = 0.10, // Taxa de duração excedente (10%),
+                    falemuito_planos = [
+                        { 
+                            limit: 30,
+                            name: 'FaleMuito 30'
+                        },
+                        {
+                            limit: 60,
+                            name: 'FaleMuito 60'
+                        },
+                        {
+                            limit: 120,
+                            name: 'FaleMuito 120'
+                        },
+                        {
+                            limit: 0,
+                            name: 'Tarifa Normal'
+                        }
+                    ];
+
+                    /*
+                        // Formula
+                        VM = Valor do Minuto
+                        TDE = Taxa de duração excedente (10% ou 0% para a tarifa normal )
+                        D = Duração da ligação
+                        F = Franquia fixa
+                        ( VM + ( VM * TDE ) * ( D - F )
+                    */
+
+                    falemuito_planos.forEach( function( plano ){
+                        let t = '-', // valor nulo usado no front
+                            price_index = app.getPriceIndex();
+
+                        // Garante que o limite é menor que a duração e que o DDD seja aceito nessa cidade
+                        if( ( ( app.call_duration - plano.limit ) > 0 ) && ( price_index >= 0 ) ){
+                            let vm = app.ddd_orig.price[ price_index ].value,
+                                tx_plano = vm + ( vm * ( plano.limit != 0 ? tde : 0 ) ),
+                                d = app.call_duration - plano.limit;
+
+                            t = tx_plano * d;
+
+                            if( t ){
+                                t  = app.numberToReal( t );
+                            }
+                        }
+
+                        result.push( { name: plano.name, value: t } )
+
+                    });
+
+                    app.results = result;
+                    return result;
+                },
+                calc_validate(){
+                    // Função que retorna true se os dados necessários para a calculadora já estão disponíveis
+                    let app = this;
+
+                    // Sempre limpa a msg de erro
+                    app.calc_msg = ''; 
+
+                    // Verifica se possui uma origem e um destino
+                    if( app.ddd_orig && app.ddd_dest  ){
+
+                        if( app.call_duration > 0 ){
+                            // Verifica se a origem pode ligar para o destino
+                            if( app.getPriceIndex() >= 0 ){
+                                return true;
+                            }else{
+                                app.calc_msg = 'A promoção FaleMuito não válida entre [0' + app.ddd_orig.digit + '] ' + app.ddd_orig.name + ' e ' + '[0' + app.ddd_dest.digit + '] ' + app.ddd_dest.name ;
+                            };
+
+                        }else{
+                            app.calc_msg = 'Por favor digite a duração da ligação'
+
+                            return false
+                        }
+                    }else{
+                        app.calc_msg = 'Por favor selecione uma origem e um destino'
+                    }
+
+                    return false;
+                },
+                getPriceIndex: function(){
+                    let app = this;
+
+                    return app.ddd_orig.price.findIndex( x => x.digit === app.ddd_dest.digit );
+                },
+                numberToReal(numero) {
+                    // Essa eu achei no google!!!
+                    var numero = numero.toFixed(2).split('.');
+                    numero[0] = "R$ " + numero[0].split(/(?=(?:...)*$)/).join('.');
+                    return numero.join(',');
+                }
+            },
+        });
+    </script>
+</body>
+</html>
